@@ -43,4 +43,5 @@ and location data.
 Dependencies:
 
 ● React-Native
+
 ● Expo
