@@ -2,7 +2,7 @@
 import { useState } from 'react';
 
 //import react-native components
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, TextInput, ImageBackground, KeyboardAvoidingView, Platform } from 'react-native';
 
 //create navigation
 const Start = ({ navigation }) => {
@@ -10,15 +10,18 @@ const Start = ({ navigation }) => {
   //these states will update user's name and change color
   const [name, setName] = useState('');
   const [backgroundColor, setBackgroundColor] = useState('');
+  const [buttonColor, setButtonColor] = useState('');
 
   const handleColorChange = (color) => {
     setBackgroundColor(color);
+    setButtonColor(color);
   }
 
   //Impliment name and background color code
   return (
     <View style={styles.container}>
       <ImageBackground source={require('../img/background-img.png')} resizeMode='cover' style={styles.image} >
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "android" ? "height" : null}>
         {/* Title of the app */}
         <Text style={styles.title}>Chat</Text>
         {/* This box is the container for name input and color pallete */}
@@ -49,12 +52,13 @@ const Start = ({ navigation }) => {
             />
           </View>
           <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, {backgroundColor: buttonColor}]}
             onPress={() => navigation.navigate('Chat', { name, backgroundColor })} //shorthand for {name: name} & {background: background}
           >
             <Text style={styles.buttonText}>Start Chatting</Text>
           </TouchableOpacity>
         </View>
+        </KeyboardAvoidingView>
       </ImageBackground>
     </View>
   );
@@ -79,10 +83,10 @@ const styles = StyleSheet.create({
     opacity: 50
   },
   button: {
-    backgroundColor: '#757083',
+    backgroundColor: '#8A95A5',
     padding: 15,
     width: '88%',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
@@ -98,7 +102,6 @@ const styles = StyleSheet.create({
   image: {
     flex: 1,
     width: '100%',
-    height: '100%',
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -122,8 +125,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    margin: 10
-  }
+    margin: 10,
+  },
 });
 
 export default Start;
