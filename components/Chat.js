@@ -52,10 +52,10 @@ const onSend = (newMessages) => {
       {...props}
       wrapperStyle={{
         right: {
-          backgroundColor: "#000"
+          backgroundColor: "#000",
         },
         left: {
-          backgroundColor: "#FFF"
+          backgroundColor: "#FFF",
         }
       }}
     />
@@ -64,9 +64,10 @@ const onSend = (newMessages) => {
   //page content
   return (
     <View style={[styles.container,{backgroundColor: backgroundColor}]}>
-      <GiftedChat
-        messages={messages}
+      <GiftedChat 
+        renderAvatar={() => null}
         renderBubble={renderBubble}
+        messages={messages}
         onSend={messages => onSend(messages)}
         user={{
           _id: 1
@@ -82,13 +83,11 @@ const onSend = (newMessages) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: '100%',
+    margin: 0,
   },
-  text: {
-    fontSize: 20,
-    fontWeight: '400',
-    color: '#fff'
+  ChatText: {
+    width: '100%',
   }
 });
 
