@@ -7,40 +7,43 @@ import { useState, useEffect } from "react";
 //import Gifted Chat
 import { Bubble, GiftedChat } from "react-native-gifted-chat";
 
+//import firestone
+import { collection, addDoc, onSnapshot, query, orderBy } from "firebase/firestore";
+
 //create navigation from start page with props
-const Chat = ({ route, navigation }) => {
+const Chat = ({ route, navigation, db }) => {
 
   //Create Message State
   const [messages, setMessages] = useState([]);
 
+  //pass on user params from app.js
+  const { name, backgroundColor, id } = route.params;
 
-//set message to static message
+  
+//set message to dynamic message
 useEffect(() => {
-  setMessages([
-    {
-      _id: 1,
-      text: 'Hello developer',
-      createdAt: new Date(),
-      user: {
-        _id: 2,
-        name: 'React Native',
-        avatar: 'https://placeimg.com/140/140/any',
-      },
-    },
-    {
-      _id: 2,
-      text: 'This is a system message',
-      createdAt: new Date(),
-      system: true,
-    },
-  ]);
+  const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+  //the onSnapshot() function listens for updates inside the collection
+  const unsubMessages = onSnapshot(q, (docs) => {
+    let newMessages = [];
+    docs.forEach(doc => {
+      newMessages.push({ id: doc.id, ...doc.data(), createdAt: new Date(doc.data().createdAt.toMillis()) })
+    });
+    setMessages(newMessages);
+  });
+
+  return () => {
+    if (unsubMessages) unsubMessages();
+  }
+
 }, []);
 
 const onSend = (newMessages) => {
-  setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages))
+     //the message to be sent/added is the 1st item inside the newMessages array
+     addDoc(collection(db, "messages"), newMessages[0]);
 }
 
-  const { name, backgroundColor } = route.params;
+  // const { name, backgroundColor } = route.params;
 
   useEffect(() => {
     navigation.setOptions({ title: name });
@@ -70,11 +73,12 @@ const onSend = (newMessages) => {
         messages={messages}
         onSend={messages => onSend(messages)}
         user={{
-          _id: 1
+          _id: id,
+          name
         }}
       />
       { Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null }
-      { Platform.OS === "ios"?<KeyboardAvoidingView behavior="padding" />: null}
+      {Platform.OS === "ios" ? <KeyboardAvoidingView behavior="height" />: null}
     </View>
   );
 }
