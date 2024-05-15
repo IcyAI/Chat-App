@@ -5,13 +5,16 @@ import { StyleSheet, View, Text, KeyboardAvoidingView, Platform } from 'react-na
 import { useState, useEffect } from "react";
 
 //import Gifted Chat
-import { Bubble, GiftedChat } from "react-native-gifted-chat";
+import { Bubble, GiftedChat, InputToolbar } from "react-native-gifted-chat";
 
 //import firestone
 import { collection, addDoc, onSnapshot, query, orderBy } from "firebase/firestore";
 
+//import from react native async storage
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 //create navigation from start page with props
-const Chat = ({ route, navigation, db }) => {
+const Chat = ({ route, navigation, db, isConnected }) => {
 
   //Create Message State
   const [messages, setMessages] = useState([]);
@@ -21,29 +24,57 @@ const Chat = ({ route, navigation, db }) => {
 
   
 //set message to dynamic message
+
+  //declared & initialized here to avoid it being accessible only within the scope of the if block
+  let unsubMessages;
+
 useEffect(() => {
+// unregister current onSnapshot() listener to avoid registering multiple listeners when useEffect code is re-executed
+if (unsubMessages) unsubMessages();
+
+if (isConnected === true) {
   const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
   //the onSnapshot() function listens for updates inside the collection
-  const unsubMessages = onSnapshot(q, (docs) => {
+  unsubMessages = onSnapshot(q, (docs) => {
     let newMessages = [];
     docs.forEach(doc => {
       newMessages.push({ id: doc.id, ...doc.data(), createdAt: new Date(doc.data().createdAt.toMillis()) })
     });
+    //cacheing messages here while the useEffect() callback function is updating the messages array
+    cacheMessages(newMessages);
     setMessages(newMessages);
   });
+
+} else loadCachedMessages();
 
   return () => {
     if (unsubMessages) unsubMessages();
   }
 
-}, []);
+}, [isConnected]);
+
+const cacheMessages = async (messagesToCache) => {
+  try {
+    await AsyncStorage.setItem("message_cache", JSON.stringify(messagesToCache));
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
+const loadCachedMessages = async () => {
+  const messageCache = await AsyncStorage.getItem("message_cache") || [];
+  setMessages(JSON.parse(messageCache));
+}
 
 const onSend = (newMessages) => {
      //the message to be sent/added is the 1st item inside the newMessages array
      addDoc(collection(db, "messages"), newMessages[0]);
 }
 
-  // const { name, backgroundColor } = route.params;
+const renderInputToolbar = (props) => {
+  if (isConnected) return <InputToolbar {...props} />;
+  else return null;
+}
 
   useEffect(() => {
     navigation.setOptions({ title: name });
@@ -71,6 +102,7 @@ const onSend = (newMessages) => {
         renderAvatar={() => null}
         renderBubble={renderBubble}
         messages={messages}
+        renderInputToolbar={renderInputToolbar}
         onSend={messages => onSend(messages)}
         user={{
           _id: id,
